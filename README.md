@@ -299,5 +299,10 @@ class ControllerV1 {
     public ResponseEntity<ResDto> delete(@RequestBody ReqDto request){ ... }
 }
 
+## http response code, exception 처리 
+> 200, 4XX, 5XX 처리하는 방식 (frontEnd 와 협의)
+> System code는 ASIS 기준으로 협의
+
+
 
 
