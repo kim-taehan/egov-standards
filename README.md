@@ -169,4 +169,135 @@ public class NumberUtils {
 }
 ```
 
+## JSON parser
+- 기본적으로 jackson lib 를 사용하는 것이 당연하다고 생각했는데 고객사에서 gson을 이야기 해서 찾아봄     
+- [성능비교](https://codediver.tistory.com/100)   
+- 스프링 진영에서는 jackson이 표준이긴 한데.. 안정성과 접근성 측면에서 jackson, 성능이 엄청 중요한 부분에서 gson 을 사용하는 것을 고민해보자
+- 주의사항: DispatcherServlet->ArgumentResolvor에서 gson을 사용하도록 해야 됨
   
+## Stream, Optional 
+- 개인적으로는 if, for 문을 사용하는 것을 싫어하기에 stream, optional 을 선호하지만 사실 SI 개발자들이 저 내용을 쓰는 것을 아직 본적 없음
+- Stream은 특히 잘 알지 못한 상태에서 쓰면 속도가 for 보다 훨씬 느림
+
+## 3Layer 에서 Interface 구현 여부 
+- spring 에서는 구현체만 있던 추상화가 있던 CGLib 으로 프록시 기술을 사용하기 때문에 큰 문제는 없음   
+- SI 비지니스 로직에서는 대부분 1대1로 추상, 구현체가 맵핑되기에 인터페이스를 만들 이유는 없음..
+
+### 3Layer 샘플 소스 
+
+#### Controller
+```java
+@Slf4j
+@RestController
+@RequedArgsConstructor
+@RequestMapping("/api/v1/commons")
+class Controller {
+
+    private final Service service;
+
+    @GetMapping
+    public ResponseEntity<IpAndPort> findIpAndPort(String domain){
+        IpAndPort ret = service.findIpAndPort(domain);
+        ResponseEntity.ok(ret);
+    }
+    
+}
+```
+
+#### Service 추상화
+```
+Interface Service {
+    IpAndPort findIpAndPort(String domain);
+}
+```
+
+#### Service 구현체 (ServiceImpl)
+```
+@Slf4j
+@Service
+@RequedArgsConstructor
+@Transactional(readOnly = true)
+Class ServiceImpl extends EgovAbstractServiceImpl implements Service {
+
+    private final Mapper mapper;
+    @Override
+    public IpAndPort findIpAndPort(String domain){
+        mapper.selectDomain(domain);
+    }
+}
+```
+
+#### Repository 
+```java
+@Slf4j
+@Repository
+public class Mapper extends EgovAbstractMapper {
+    public IpAndPort selectItems(String domain)  {
+        IpAndPort ret = (IpAndPort) select("ItemsMapperDao.selectItems", domain);
+        return ret;
+    }
+}
+```
+
+## HttpMethod 방식 
+> 전체를 POST 로 하고 URL Path를 통해 구분할 수 있게 처리함   
+> GET, POST, PATCH(PUT), DELETE와 Path variable 를 사용하여 처리함
+
+### Post로 처리
+```java
+@Slf4j
+@RestController
+@RequestMapping("/api/v1")
+class ControllerV1 {
+
+    // 리스트 조회
+    @PostMapping("/selectUsers")
+    public ResponseEntity<List<ResDto>> selectList(@RequestBody ReqDto request){ ... }
+    
+    // 단건 조회
+    @PostMapping("/selectUser")
+    public ResponseEntity<ResDto> select(@RequestBody ReqDto request){ ... }
+
+    // Insert
+    @PostMapping("/insertUser")
+    public ResponseEntity<ResDto> insert(@RequestBody ReqDto request){ ... }
+
+    // Update
+    @PostMapping("/updateUser")
+    public ResponseEntity<ResDto> update(@RequestBody ReqDto request){ ... }
+
+    // Delete
+    @PostMapping("/deleteUser")
+    public ResponseEntity<ResDto> delete(@RequestBody ReqDto request){ ... }
+}
+
+### http-method 적극 활용
+```java
+@Slf4j
+@RestController
+@RequestMapping("/api/v1")
+class ControllerV1 {
+
+    // 리스트 조회
+    @GetMapping("")
+    public ResponseEntity<List<ResDto>> selectList(@ModelAttribute ReqDto request){ ... }
+    
+    // 단건 조회
+    @GetMapping("/{userId}")
+    public ResponseEntity<ResDto> select(@PathVariable String userId){ ... }
+
+    // Insert
+    @PostMapping("")
+    public ResponseEntity<ResDto> insert(@RequestBody ReqDto request){ ... }
+
+    // Update
+    @PatchMapping("")
+    public ResponseEntity<ResDto> update(@RequestBody ReqDto request){ ... }
+
+    // Delete
+    @DeleteMapping("")
+    public ResponseEntity<ResDto> delete(@RequestBody ReqDto request){ ... }
+}
+
+
+
