@@ -129,8 +129,10 @@ public class User {
   // 정적 팩토리 방식
   public static User from(String url){
       String[] spliteData = url.split(":");
-      this.ip = spliteData[0];
-      this.port = Integer.parint(spliteData[1]);
+      return User.builder()
+                  .ip(spliteData[0])
+                  .port(Integer.parint(spliteData[1]))
+                  .build();
   }
 }
 ```
@@ -301,7 +303,7 @@ class ControllerV1 {
 ```
 
 ## http response code, exception 처리 
-> 200, 4XX, 5XX 처리하는 방식 (frontEnd 와 협의)
+> 200, 4XX, 5XX 처리하는 방식 (frontEnd 와 협의)   
 > System code는 ASIS 기준으로 협의
 
 
