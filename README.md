@@ -10,8 +10,42 @@
 ## Lombok
 > Lombok으로 인해서 편해지는 측면도 있지만 시스템을 이해하지 못한 상태에서 사용하는 경우 많은 문제가 생길 수 있습니다.    
 > 권장하는 annotation : @Getter, @RequedArgsConstructor(Data 처리단위), @Slf4j(Logging)  
-> 주의를 요하는 annotation : @Setter  
+> 주의를 요하는 annotation : @Setter    
 > 제한할 annotation : @Data, @ToString, @Equals, @HashCode
+
+
+## Core (Spring, Egov, solution(3th), opensource)
+-  Java Platform Module System (JPMS) 를 사용하여 각 시스템에서 필요한 부분만 확인할 수 있도록 함   
+-  ASIS 시스템에서 어떻게 처리되고 있는지 먼저 확인 필요   
+-  각 시스템에는 interface 만 공개하며,  @Conditaional 을 통해 구현체를 추가하는 방식으로 각 시스템에서 재구현하지 않는 이상 core 구현체를 사용 
+
+
+## Annotaion 적극 활용
+- transation, logging, session 등의 처리에서 annotation으로 필요한 기술을 제공하도록 할 예정
+- @Transaction, @Retry, @TimeCheck, @NoLogin
+
+## DB Transaction
+- Hicari cp (DB Connection pool) 사용
+- egov에서 권장하는 EgovAbstractServiceImpl 를 상속받아 2개의 추상 클래스로 구분하며, 이를 통해 3가지로 방식으로 구분하여 처리할 수 있게 함
+- NoneTransation: DB 연결이 필요없는 클래스처리    
+- Transation readonly(메서드 단위) : 조회전용 메서드 (Rollback 가능을 없기 때문에 성능측면)
+- Transation(메서드 단위) : 쓰기전용 메서드   
+- 주의사항: AOP를 사용하는 방식이라 클래스 내부 호출시에는 정상동작안함 (개발자 교육으로 가이드 필요)
+
+```java
+@Transactional(readOnly = true)
+class CrudClass extends EgovAbstractServiceImpl {
+
+  public String findPw(String ip){
+      ...
+  }
+  @Transactional
+  public void insertIpAndPort(IpAndPort ipAndPort){
+      ...
+  }
+}
+```
+
 
 ## dependency injection
 > egov에서 가이드 하는 field injection을 사용하고 있는데 java, spring 진형에서 지양하는 방법이다. 특정 tool에서는 이 방법을 사용하는 경우 경고를 한다.
@@ -105,8 +139,8 @@ public class User {
 ## Logging 처리 
 > slf4j (로깅 추상화 라이브러리), Logback(slf4j를 구현한 구현체)  
 > logback mdc를 통해서 구분하도록 함 (transation 정보)  
-> @Slf4j를 어노테이션을 활용하여 쉽게 접근하도록 함   
-> 주의사항1 : log 데이터 남기는 경우 '+'가 아닌 ','를 사용하도록 권장 (성능 측면)
+> @Slf4j를 어노테이션을 활용하여 쉽게 접근하도록 함     
+> 주의사항1 : log 데이터 남기는 경우 '+'가 아닌 ','를 사용하도록 권장 (성능 측면)   
 > 주의사항2 : System.out 을 사용하는 것은 소스분석도구를 통해 경고하도록 함
 ```java
 @Slf4j 
