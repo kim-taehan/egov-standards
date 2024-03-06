@@ -160,7 +160,7 @@ public class LoggingTestClass {
 - 기존 소스에서 변경이 어렵거나 StringUtils 등의 특정 클래스 관련된 내용은 유지하도록 함
 - 주의사항 : 객체를 생성, 상속하지 못하게 처리 (@UtilityClass)
 ```java
-public class NumberUtils {
+public final class NumberUtils {
   private NumberUtils(){
     throw new RuntimeException();
   }
