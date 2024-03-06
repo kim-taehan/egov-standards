@@ -82,8 +82,8 @@ public class User {
 ```java
 @Getter
 public class User {
-  private String ip;
-  private int port; // 불변 객체로 생성
+  private final String ip;
+  private final int port; // 불변 객체로 생성
 
   // Builder 방식 (불변 객체가 추가되어어 기존 소스는 문제가 없다.)
   @Builder
@@ -97,6 +97,40 @@ public class User {
       String[] spliteData = url.split(":");
       this.ip = spliteData[0];
       this.port = Integer.parint(spliteData[1]);
+  }
+}
+```
+
+
+## Logging 처리 
+> slf4j (로깅 추상화 라이브러리), Logback(slf4j를 구현한 구현체)  
+> logback mdc를 통해서 구분하도록 함 (transation 정보)  
+> @Slf4j를 어노테이션을 활용하여 쉽게 접근하도록 함   
+> 주의사항1 : log 데이터 남기는 경우 '+'가 아닌 ','를 사용하도록 권장 (성능 측면)
+> 주의사항2 : System.out 을 사용하는 것은 소스분석도구를 통해 경고하도록 함
+```java
+@Slf4j 
+public class LoggingTestClass {
+    public void careateIp(IpAndPort ipAndPort){
+        log.debug("ip={}", ipAndPort.getIp()); // (O)
+        log.debug("port=" + ipAndPort.getPort()); // (X)
+    }
+}
+```
+
+
+## utils 클래스 
+- 객체지향적이지 않은 방식 신규로 만드는 클래스는 bean 등록후 주입받는 방식으로 처리   
+- 기존 소스에서 변경이 어렵거나 StringUtils 등의 특정 클래스 관련된 내용은 유지하도록 함
+- 주의사항 : 객체를 생성, 상속하지 못하게 처리 (@UtilityClass)
+```java
+public class NumberUtils {
+  private NumberUtils(){
+    throw new RuntimeException();
+  }
+  
+  public static boolean isDigit(String text){
+      ....
   }
 }
 ```
